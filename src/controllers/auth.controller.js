@@ -1,173 +1,31 @@
-import jwt from 'jsonwebtoken'
-
-
-import statusCode from "../constants/statusCode.js";
-import successResponse from "../exceptions/successResponse.js";
+import jwt from "jsonwebtoken";
 import CONFIG from "../config/config.js";
+import { AUTH_COOKIE_NAME, AUTH_COOKIE_OPTIONS, clearAuthCookie } from "../config/cookieOptions.js";
+import statusCode from "../constants/statusCode.js";
 import appError from "../exceptions/appError.js";
-import { findUserByEmail, createUser } from "../services/user.services.js";
+import successResponse from "../exceptions/successResponse.js";
+import { createUser, findUserByEmail } from "../services/user.services.js";
 import encryptPassword from "../utils/passwordUtils/encryptPassword.js";
-import decriptPassword from "../utils/passwordUtils/decryptPassword.js";
-import { parseAndValidateUpload } from "../utils/imageUtils/imageSizeCheck.utils.js";
+import verifyPassword from "../utils/passwordUtils/verifyPassword.js";
 import { uploadAndSaveImage } from "../utils/imageUtils/ImageUpload.cloudinary.js";
+import { generateCsrfToken } from "../middlewares/security/csrfProtection.js";
+
 
 const authController = {
 
-    // REGISTRATION CONTROLLER
-    // register: async (req, res, next) => {
-    //     console.log('registration route hitted');
+    csrfToken: (req, res, next) => {
+        try {
+            const csrfToken = generateCsrfToken(req, res);
 
-    //     let uploadedFile = req.file || null;
-
-    //     console.log('the image file is: ', uploadedFile);
-
-
-
-
-
-
-    //     // Now req.body is safely populated by Multer
-    //     const { name, email, phoneNumber, dob, password, terms } = req.body;
-
-    //     if (!terms) {
-    //         return next(new appError('please agree to the terms and condition', statusCode.BAD_REQUEST));
-    //     }
-
-    //     if (!name || !email || !phoneNumber || !password) {
-    //         return next(new appError('supply the complete details ', statusCode.BAD_REQUEST));
-    //     }
-
-    //     try {
-    //         let profilePictureData = null;
-
-    //         // If an image was successfully attached and passed Zod sizing check, upload it to Cloudinary
-    //         // if (uploadedFile) {
-    //         //     const base64Image = `data:${uploadedFile.mimetype};base64,${uploadedFile.buffer.toString('base64')}`;
-
-    //         //     // Your utility should return the saved DB image record or metadata
-    //         //     const cloudinaryResult = await uploadAndSaveImage(base64Image);
-
-    //         //     profilePictureData = {
-    //         //         imageUrl: cloudinaryResult.image_url, // Maps to your schema paths
-    //         //         cloudinary_id: cloudinaryResult.cloudinary_id
-    //         //     };
-    //         // }
-
-
-    //         const uploadedFile = req.file || null;
-
-
-    //         if (uploadedFile) {
-    //             const cloudinaryResult = await uploadAndSaveImage(
-    //                 uploadedFile.buffer
-    //             );
-
-    //             profilePictureData = {
-    //                 imageUrl: cloudinaryResult.image_url,
-    //                 cloudinary_id: cloudinaryResult.cloudinary_id
-    //             };
-    //         }
-
-    //         const hashedPassword = await encryptPassword(password);
-
-    //         // Construct userData matching your updated Mongoose Model
-    //         const userData = {
-    //             name,
-    //             email,
-    //             phoneNumber,
-    //             dob,
-    //             password: hashedPassword,
-    //             terms,
-    //             image: profilePictureData // Stores null if no image was provided
-    //         };
-
-    //         const newUser = await createUser(userData);
-
-    //         if (!newUser) {
-    //             return next(new appError('An error occurred, please try again', statusCode.INTERNAL_SERVER_ERROR));
-    //         }
-
-    //         console.log('new user is: ', newUser);
-
-    //         //Return success response to the client
-    //         return successResponse(res, 'Registration successful', newUser);
-
-    //     } catch (error) {
-    //         console.log('error creating user: ', error.message);
-
-    //         // Email Already Exists 
-    //         if (error.code === 11000) {
-    //             const field = Object.keys(error.keyValue)[0];
-    //             return next(new appError(`This ${field} is already registered.`, statusCode.BAD_REQUEST));
-    //         }
-
-    //         if (
-    //             error.name === 'MongooseServerSelectionError' ||
-    //             error.message.includes('topology') ||
-    //             error.message.includes('ECONNREFUSED')
-    //         ) {
-    //             return next(new appError('Database service is temporarily unavailable. Please try again later.', statusCode.SERVICE_UNAVAILABLE));
-    //         }
-
-    //         // Catch any other unhandled errors 
-    //         return next(new appError(error.message, statusCode.INTERNAL_SERVER_ERROR));
-    //     }
-
-
-
-
-    //     // const { name, email, phoneNumber, dob, password, image, terms } = req.body;
-
-    //     // if (!terms) {
-    //     //     return next(new appError('please agree to the terms and condition', statusCode.BAD_REQUEST))
-    //     // }
-
-    //     // if (!name || !email || !phoneNumber || !password) {
-    //     //     return next(new appError('supply the complete details ', statusCode.BAD_REQUEST))
-    //     // }
-
-    //     // const hashedPassword = await encryptPassword(password);
-
-    //     // const userData = {
-    //     //     name, email, phoneNumber, dob, password: hashedPassword, terms, image
-    //     // }
-
-    //     // try {
-    //     //     const newUser = await createUser(userData);
-
-    //     //     if (!newUser) {
-    //     //         return next(new appError('An error occurred, please try again', statusCode.INTERNAL_SERVER_ERROR));
-    //     //     }
-
-    //     //     console.log('new user is: ', newUser);
-
-    //     // } catch (error) {
-    //     //     console.log('error creating user: ', error.message);
-
-    //     //     // Email Already Exists 
-    //     //     if (error.code === 11000) {
-    //     //         const field = Object.keys(error.keyValue)[0];
-    //     //         return next(new appError(`This ${field} is already registered.`, statusCode.BAD_REQUEST));
-    //     //     }
-
-    //     //     if (
-    //     //         error.name === 'MongooseServerSelectionError' ||
-    //     //         error.message.includes('topology') ||
-    //     //         error.message.includes('ECONNREFUSED')
-    //     //     ) {
-    //     //         return next(new appError('Database service is temporarily unavailable. Please try again later.', statusCode.SERVICE_UNAVAILABLE));
-    //     //     }
-
-    //     //     //  Catch any other unhandled errors 
-    //     //     return next(new appError(error.message, statusCode.INTERNAL_SERVER_ERROR));
-    //     // }
-
-
-
-
-
-
-    // },
+            return successResponse(
+                res,
+                { csrfToken },
+                "CSRF token generated successfully"
+            );
+        } catch (error) {
+            return next(error);
+        }
+    },
 
 
     register: async (req, res, next) => {
@@ -191,7 +49,7 @@ const authController = {
                 );
             }
 
-            // Validate required fields
+            // Validate required duplicatedFields
             if (!name || !email || !phoneNumber || !password) {
                 return next(
                     new appError(
@@ -246,19 +104,20 @@ const authController = {
             return successResponse(
                 res,
                 "Registration successful",
-                newUser
+                newUser,
+                statusCode.CREATED
             );
 
         } catch (error) {
             console.error("Registration error:", error);
 
-            // Handle duplicate email or other unique fields
+            // Handle duplicate email or other unique duplicatedFields
             if (error.code === 11000) {
-                const field = Object.keys(error.keyValue)[0];
+                const duplicatedField = Object.keys(error.keyValue)[0];
 
                 return next(
                     new appError(
-                        `This ${field} is already registered.`,
+                        `This ${duplicatedField} is already registered.`,
                         statusCode.BAD_REQUEST
                     )
                 );
@@ -288,22 +147,35 @@ const authController = {
     },
 
 
-    // LOGIN CONTROLLER
     login: async (req, res, next) => {
-        const { email, password } = req.body
-        console.log('login controller: ', email, password);
+
+        const { email, password } = req.body;
+
+        if (!email) {
+            return next(new appError('Provide email address', statusCode.BAD_REQUEST))
+        }
 
         try {
-            // Find user
+
+            // Find user.
             const user = await findUserByEmail(email);
 
+            // Use a generic response to prevent account enumeration.
             if (!user) {
-                console.log('there no user in databse ');
-
-                return next(new appError('User not registered', statusCode.UNAUTHORISED))
+                return next(new appError("Invalid email or password", statusCode.UNAUTHORISED));
             }
 
-            // Create payload for JWT
+            // Verify password.
+            const isPasswordCorrect = await verifyPassword(
+                password,
+                user.password
+            );
+
+            if (!isPasswordCorrect) {
+                return next(new appError("Invalid email or password", statusCode.UNAUTHORISED));
+            }
+
+            // Create JWT payload.
             const payload = {
                 id: user.id,
                 email: user.email,
@@ -311,33 +183,60 @@ const authController = {
                 role: user.role
             };
 
-            console.log(payload);
+            // Generate JWT.
+            const token = jwt.sign(payload, CONFIG.ENV.JWT_ACCESS_TOKEN_SECRET,
+                {
+                    algorithm: "HS256",
+                    expiresIn: "1h"
+                }
+            );
 
-            const secret = CONFIG.ENV;
+            // Set HTTP-only cookie.
+            res.cookie(AUTH_COOKIE_NAME, token, AUTH_COOKIE_OPTIONS);
 
-            console.log('my secret token is: ', secret);
+
+            req.cookies = req.cookies || {};
+            req.cookies[AUTH_COOKIE_NAME] = token;
+            const csrfToken = generateCsrfToken(req, res, { overwrite: true });
 
 
-            // Sign token
-            const token = jwt.sign(payload, CONFIG.ENV.JWT_ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
-            res.cookie("accessToken", token, {
-                httpOnly: true,
-                secure: process.env.NODE_ENV === "production",
-                sameSite: "lax",
-                maxAge: 7 * 24 * 60 * 60 * 1000,
-                path: "/",
-            });
-
-            successResponse(res, token, 'login successful')
+            return successResponse(
+                res,
+                payload,
+                "Login successful",
+                200,
+                csrfToken
+            );
 
         } catch (error) {
-            console.log('error finding user by email: ', error);
 
+            return next(error);
         }
-
-
-
     },
+
+
+    // LOGOUT CONTROLLER
+
+    logout: async (req, res, next) => {
+
+        try {
+            clearAuthCookie(res);
+
+            // Switch the CSRF token back to the anonymous session context.
+            req.cookies = req.cookies || {};
+            delete req.cookies[AUTH_COOKIE_NAME];
+            const csrfToken = generateCsrfToken(req, res, { overwrite: true });
+
+            return res.status(statusCode.SUCCESS).json({
+                success: true,
+                message: "Logout successful",
+                csrfToken
+            });
+        } catch (error) {
+            return next(error);
+        }
+    }
+
 
 
 }

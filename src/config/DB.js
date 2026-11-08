@@ -2,6 +2,8 @@ import mongoose from 'mongoose';
 
 // local modules 
 import CONFIG from './config.js';
+import appError from '../exceptions/appError.js';
+import statusCode from '../constants/statusCode.js';
 
 const connectDB = async () => {
     try {
@@ -9,13 +11,8 @@ const connectDB = async () => {
         console.log('MongoDB connected successfully');
 
     } catch (error) {
-        if (error instanceof Error) {
-            console.log(`Error: ${error.message}`);
-            
-        } else {
-            console.log(`Database connection failed, error: ${err}`);
-
-        }
+       console.error("MongoDB connection failed:", error.message);
+        throw new appError("failed to connect to database, please try again", statusCode.INTERNAL_SERVER_ERROR)
     }
 }
 

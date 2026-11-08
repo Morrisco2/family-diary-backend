@@ -1,29 +1,51 @@
-const authenticateJWT = (req, res, next) => {
-  // Get auth header - The Authorization header is commonly used to send authentication tokens
-  const authHeader = req.headers.authorization;
+import jwt from "jsonwebtoken";
+import CONFIG from "../config/config.js";
+import { AUTH_COOKIE_NAME } from "../config/cookieOptions.js";
+import statusCode from "../constants/statusCode.js";
+import appError from "../exceptions/appError.js";
+import { findUserById } from "../services/user.services.js";
 
-  if (!authHeader) {
-    return res.status(401).json({ message: 'Authorization header missing' });
-  }
+const authenticateJWT = async (req, res, next) => {
+    console.log("this is the authenticate jwt middleware");
+    
+    const token = req.cookies?.[AUTH_COOKIE_NAME];
 
-  // Extract token from "Bearer <token>"
-  const token = authHeader.split(' ')[1];
+    if (!token) {
+        return next(new appError("Authentication required.", statusCode.UNAUTHORISED));
+    }
 
-  if (!token) {
-    return res.status(401).json({ message: 'Token missing' });
-  }
+    try {
+        const decoded = jwt.verify(token, CONFIG.ENV.JWT_ACCESS_TOKEN_SECRET, {
+            algorithms: ["HS256"]
+        });
 
-  try {
-    // Verify token
-    const decoded = jwt.verify(token, JWT_SECRET);
+        if (!decoded.id) {
+            return next(new appError("Invalid authentication token.", statusCode.UNAUTHORISED));
+        }
 
-    // Attach user to request
-    req.user = decoded;
+        // Read the current account/role so a deleted or demoted account cannot
+        // continue using stale authorization claims until the JWT expires.
+        const user = await findUserById(decoded.id);
 
-    next();
-  } catch (error) {
-    return res.status(403).json({ message: 'Invalid or expired token' });
-  }
+        if (!user) {
+            return next(new appError("The account associated with this session no longer exists.", statusCode.UNAUTHORISED));
+        }
+
+        req.user = {
+            id: user.id,
+            email: user.email,
+            username: user.name,
+            role: user.role
+        };
+
+        return next();
+    } catch (error) {
+        if (["TokenExpiredError", "JsonWebTokenError", "NotBeforeError"].includes(error.name)) {
+            return next(new appError("Invalid or expired authentication token.", statusCode.UNAUTHORISED));
+        }
+
+        return next(error);
+    }
 };
 
-export default authenticateJWT
+export default authenticateJWT;

@@ -1,164 +1,59 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
 const profilePictureSchema = new mongoose.Schema({
-    imageUrl: {
-        type: String,
-        required: true,
-        trim: true
-    },
-    cloudinary_id: {
-        type: String,
-        required: true,
-        trim: true
-    }
-}, { _id: false }); //avoids creating an unnecessary sub-ID for the nested object
+    imageUrl: { type: String, required: true, trim: true },
+    cloudinary_id: { type: String, required: true, trim: true }
+}, { _id: false });
 
 const userSchema = new mongoose.Schema({
     name: {
         type: String,
         required: true,
         trim: true,
+        minlength: 3,
         validate: {
-            validator: (value) => {
-                return /[a-zA-Z]/.test(value)
-            },
-            message: 'name must contain letters only'
+            validator: (value) => /^[A-Za-z\s]+$/.test(value),
+            message: "Name must contain letters and spaces only."
         }
     },
-
     email: {
         type: String,
-        required: [true, 'email address is required'],
+        required: true,
         trim: true,
         lowercase: true,
         unique: true,
+        index: true,
         validate: {
-            validator: (value) => {
-                return /^[^\s@]+@[^\s@]+\.[^\s@]+/.test(value);
-            },
-            message: "invalid email address",
+            validator: (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value),
+            message: "Invalid email address."
         }
     },
-
     phoneNumber: {
         type: String,
         trim: true,
-        required: false,
+        default: null,
         validate: {
-            validator: function (v) {
-                return /^\+?[1-9]\d{1,14}$/.test(v);
-            },
-            message: 'invalid phone number'
-        },
-        default: null 
+            validator: (value) => value === null || /^\+[1-9]\d{7,14}$/.test(value),
+            message: "Invalid phone number."
+        }
     },
-
-    dob: {
-        type: String,
-        trim: true,
-        required: true,
-    },
-    
+    dob: { type: String, required: true, trim: true },
     role: {
         type: String,
-        required: false,
-        trim: true,
-        enum: ['user', 'leader', 'admin'],
-        default: 'user'
+        enum: ["user", "leader", "admin"],
+        default: "user",
+        required: true
     },
-
     password: {
         type: String,
-        trim: true,
+        required: true,
+        select: false
     },
-
     image: {
         type: profilePictureSchema,
-        required: false,
         default: null
     }
-}, { timestamps: true }); 
+}, { timestamps: true });
 
-const User = mongoose.model('User', userSchema);
-
+const User = mongoose.model("User", userSchema);
 export default User;
-
-
-
-
-
-
-
-
-
-
-
-
-// import mongoose from 'mongoose';
-
-
-// const userSchema = new mongoose.Schema({
-//     name: {
-//         type: String,
-//         required: true,
-//         trim: true,
-//         validate: {
-//             validator: (value) => {
-//                 return /[a-zA-Z]/.test(value)
-//             },
-//             message: 'name must contain letters only'
-//         }
-//     },
-
-//     email: {
-//         type: String,
-//         required: [true, 'email address is required'],
-//         trim: true,
-//         lowercase: true,
-//         unique: true,
-//         validate: {
-//             validator: (value) => {
-//                 return /^[^\s@]+@[^\s@]+\.[^\s@]+/.test(value);
-//             },
-//             message: "invalid email address",
-//         }
-
-//     },
-
-//     phoneNumber: {
-//         type: String,
-//         trim: true,
-//         required: false,
-//         validate: {
-//             validator: function (v) {
-//                 return /^\+?[1-9]\d{1,14}$/.test(v);
-//             },
-//             message: 'invalid phone number'
-//         },
-//         default: 'nil'
-//     },
-
-//     dob: {
-//         type: String,
-//         trim: true,
-//         required: true,
-//     },
-//     role: {
-//         type: String,
-//         required: false,
-//         trim: true,
-//         enum: ['user', 'leader', 'admin'],
-//         default: 'user'
-//     },
-//     password: {
-//         type: String,
-//         trim: true,
-
-//     },
-
-// })
-
-
-// const User = mongoose.model('User', userSchema);
-
-// export default User

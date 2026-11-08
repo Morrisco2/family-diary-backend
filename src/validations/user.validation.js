@@ -1,14 +1,16 @@
-import { email, z } from 'zod'
+import { z } from 'zod'
 
 export const registerUserSchema = z.object({
     name: z
         .string({ required_error: 'name is required' })
+        .trim()
         .nonempty({ message: 'name is required' })
         .min(3, { message: 'name must be at least 3 characters long' })
         .regex(/^[A-Za-z\s]+$/, { message: 'name must contain letters only' }),
 
     email: z
         .string({ required_error: 'email is required' })
+        .trim()
         .nonempty({ message: 'email is required' })
         .email({ message: 'Invalid email format' }),
 
@@ -57,10 +59,3 @@ export const imageValidationSchema = z.object({
     })
 });
 
-
-// export const loginUserSchema = z.object({
-//   body: z.object({
-//     email: z.string({ required_error: "email is required" }).email({ message: "Invalid email format" }),
-//     password: z.string({ required_error: "password is required" }).min(8),
-//   }),
-// });

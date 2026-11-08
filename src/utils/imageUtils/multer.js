@@ -17,7 +17,10 @@ const multerInstance = multer({
     storage,
     limits: {
         fileSize: MAX_FILE_SIZE,
-        files: 1
+        files: 1,
+        fields: 12,
+        fieldSize: 16 * 1024,
+        parts: 13
     },
     fileFilter: (req, file, cb) => {
         const allowedMimeTypes = [
