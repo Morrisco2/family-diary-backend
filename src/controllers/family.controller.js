@@ -4,11 +4,20 @@ import successResponse from "../exceptions/successResponse.js";
 import { createFamily, fetchFamilies } from "../services/family.services.js";
 import { findUser, findUserById } from "../services/user.services.js";
 
+
+
 const familyController = {
 
     // CREATE FAMILY CONTROLLER
     createFamily: async (req, res, next) => {
-        const { id, username } = req.user;
+        const { id, username, imageUrl } = req.user;
+        console.log("uer image url is: ", imageUrl);
+
+
+        // if(true){
+        //     return next(new appError("why will this be true?, you are a witch", statusCode.UNAUTHORISED))
+        // }
+        
         const { familyName } = req.body;
 
         if (!id || !username) {
@@ -17,7 +26,8 @@ const familyController = {
 
         const userData = {
             id,
-            name: username
+            name: username,
+            imageUrl: imageUrl
         }
 
         try {
@@ -85,11 +95,17 @@ const familyController = {
     // FETCH FAMILIES
     fetchFamilies: async (req, res, next) => {
         console.log('fetch family route hitted');
+
         try {
             const families = await fetchFamilies();
-            console.log("available families are: ", families);
-            
-            return successResponse(res, families, "families fetched successfully")
+
+            const configFamily = {
+                familyName: families.familyName,
+                leaderName: families.leader.name,
+                leaderImg: ""
+            }
+
+            return successResponse(res, configFamily, "families fetched successfully")
         } catch (error) {
             return next(new appError('failed to fetch available families', statusCode.INTERNAL_SERVER_ERROR))
         }

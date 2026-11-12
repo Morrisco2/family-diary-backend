@@ -4,11 +4,11 @@ import { AUTH_COOKIE_NAME, AUTH_COOKIE_OPTIONS, clearAuthCookie } from "../confi
 import statusCode from "../constants/statusCode.js";
 import appError from "../exceptions/appError.js";
 import successResponse from "../exceptions/successResponse.js";
+import { generateCsrfToken } from "../middlewares/security/csrfProtection.js";
 import { createUser, findUserByEmail } from "../services/user.services.js";
+import { uploadAndSaveImage } from "../utils/imageUtils/ImageUpload.cloudinary.js";
 import encryptPassword from "../utils/passwordUtils/encryptPassword.js";
 import verifyPassword from "../utils/passwordUtils/verifyPassword.js";
-import { uploadAndSaveImage } from "../utils/imageUtils/ImageUpload.cloudinary.js";
-import { generateCsrfToken } from "../middlewares/security/csrfProtection.js";
 
 
 const authController = {
@@ -160,6 +160,7 @@ const authController = {
             // Find user.
             const user = await findUserByEmail(email);
 
+
             // Use a generic response to prevent account enumeration.
             if (!user) {
                 return next(new appError("Invalid email or password", statusCode.UNAUTHORISED));
@@ -180,8 +181,11 @@ const authController = {
                 id: user.id,
                 email: user.email,
                 username: user.name,
-                role: user.role
+                role: user.role,
+                imageURL: user.image?.imageUrl ?? "",
             };
+
+            
 
             // Generate JWT.
             const token = jwt.sign(payload, CONFIG.ENV.JWT_ACCESS_TOKEN_SECRET,

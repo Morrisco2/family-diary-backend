@@ -24,6 +24,10 @@ const familySchema = new mongoose.Schema({
             requied: true,
             trim: true,
             default: 'leader'
+        },
+        imageUrl: {
+            type: String,
+            trim: true,
         }
     }
 })

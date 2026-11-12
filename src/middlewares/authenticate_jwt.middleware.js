@@ -6,7 +6,7 @@ import appError from "../exceptions/appError.js";
 import { findUserById } from "../services/user.services.js";
 
 const authenticateJWT = async (req, res, next) => {
-    console.log("this is the authenticate jwt middleware");
+    console.log("jwt auth hitted");
     
     const token = req.cookies?.[AUTH_COOKIE_NAME];
 
@@ -35,7 +35,8 @@ const authenticateJWT = async (req, res, next) => {
             id: user.id,
             email: user.email,
             username: user.name,
-            role: user.role
+            role: user.role,
+            imageUrl: user.image?.imageUrl ?? ""
         };
 
         return next();
