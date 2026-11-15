@@ -12,6 +12,7 @@ const CONFIG = {
         PORT: Number.parseInt(process.env.PORT || "3000", 10),
         MONGO_URL: process.env.MONGO_URL,
         JWT_ACCESS_TOKEN_SECRET: process.env.JWT_ACCESS_TOKEN_SECRET,
+        JWT_REFRESH_TOKEN_SECRET: process.env.JWT_REFRESH_TOKEN_SECRET,
         CSRF_SECRET: process.env.CSRF_SECRET,
         COOKIE_SAME_SITE: (process.env.COOKIE_SAME_SITE || "lax").toLowerCase(),
         CLIENT_URLS: process.env.CLIENT_URLS,

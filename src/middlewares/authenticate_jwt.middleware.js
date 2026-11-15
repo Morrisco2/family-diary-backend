@@ -6,7 +6,6 @@ import appError from "../exceptions/appError.js";
 import { findUserById } from "../services/user.services.js";
 
 const authenticateJWT = async (req, res, next) => {
-    console.log("jwt auth hitted");
     
     const token = req.cookies?.[AUTH_COOKIE_NAME];
 

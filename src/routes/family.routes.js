@@ -11,6 +11,8 @@ const router = Router();
 router.use(authenticateJWT)
 router.post('/create-family',familyMiddleware, familyController.createFamily);
 router.get('/fetch-family', familyController.fetchFamilies)
+router.post('/join-family', familyController.joinFamily);
+router.get("/my-membership", authenticateJWT, familyController.getMyFamilyMembership)
 
 
 export default router

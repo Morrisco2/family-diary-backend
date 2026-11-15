@@ -11,6 +11,12 @@ import { doubleCsrfProtection } from "./middlewares/security/csrfProtection.js";
 import { generalApiLimiter } from "./middlewares/security/rateLimiter.js";
 import routes from "./routes/Routes.js";
 
+// SOCKET.IO DEPENDENCY IMPORT 
+import http from "http";
+import { initializeSocket } from "./config/socket.js";
+
+
+
 const app = express();
 
 // Only configure trust proxy when the deployment actually sits behind a
@@ -42,14 +48,23 @@ app.use((req, res, next) => {
 
 app.use(errorHandler);
 
+// Create HTTP server
+const server = http.createServer(app);
+// Initialize Socket.IO
+initializeSocket(server);
+
 const startServer = async () => {
     try {
         validateEnvironment();
         await connectDB();
 
-        app.listen(CONFIG.ENV.PORT, () => {
+        server.listen(CONFIG.ENV.PORT, () => {
             console.log(`Family Diary API is running on port ${CONFIG.ENV.PORT}`);
         });
+
+        // app.listen(CONFIG.ENV.PORT, () => {
+        //     console.log(`Family Diary API is running on port ${CONFIG.ENV.PORT}`);
+        // });
     } catch (error) {
         console.error("Server startup failed:", error.message);
         process.exitCode = 1;

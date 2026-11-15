@@ -4,7 +4,7 @@ import cookie from "cookie";
 
 import CONFIG from "./config.js";
 import appError from "../exceptions/appError.js";
-import statusCode from "../constants/statusCode";
+import statusCode from "../constants/statusCode.js";
 
 let io;
 

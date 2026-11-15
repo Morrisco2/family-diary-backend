@@ -1,4 +1,34 @@
+
 import mongoose from "mongoose";
+
+const memberSchema = new mongoose.Schema(
+    {
+        user: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Users",
+            required: true
+        },
+
+        status: {
+            type: String,
+            enum: ["pending", "approved", "rejected"],
+            default: "pending",
+            required: true
+        },
+
+        requestedAt: {
+            type: Date,
+            default: Date.now
+        },
+
+        approvedAt: {
+            type: Date,
+            default: null
+        }
+    },
+    { _id: false }
+);
+
 
 const familySchema = new mongoose.Schema({
     familyName: {
@@ -6,13 +36,13 @@ const familySchema = new mongoose.Schema({
         required: true,
         trim: true,
         unique: true,
-       
     },
+
     leader: {
         id: {
-            type: String,
-            trim: true,
-            requied: true
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Users",
+            required: true
         },
         name: {
             type: String,
@@ -21,16 +51,19 @@ const familySchema = new mongoose.Schema({
         },
         role: {
             type: String,
-            requied: true,
-            trim: true,
-            default: 'leader'
+            default: "leader",
+            trim: true
         },
         imageUrl: {
             type: String,
             trim: true,
         }
-    }
-})
+    },
 
-const Families = mongoose.model('Families', familySchema);
-export default Families
+    members: [memberSchema]
+
+}, { timestamps: true });
+
+const Families = mongoose.model("Families", familySchema);
+
+export default Families;
