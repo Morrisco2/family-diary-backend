@@ -110,6 +110,14 @@ export const getFamilyMembership = async (userId) => {
             status: "approved"
           }
         }
+      },
+      {
+        members: {
+          $elemMatch: {
+            user: userId,
+            status: "pending"
+          }
+        }
       }
     ]
   }).select("_id familyName leader members");

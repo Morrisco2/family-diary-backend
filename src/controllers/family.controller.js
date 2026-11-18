@@ -2,7 +2,8 @@ import statusCode from "../constants/statusCode.js";
 import appError from "../exceptions/appError.js";
 import successResponse from "../exceptions/successResponse.js";
 import { createFamily, fetchFamilies, getFamilyMembership, joinFamily } from "../services/family.services.js";
-import { findUserById } from "../services/user.services.js";
+import { findUserById, updateUser } from "../services/user.services.js";
+import User from "../models/user.model.js";
 
 
 
@@ -11,7 +12,6 @@ const familyController = {
     // CREATE FAMILY CONTROLLER
     createFamily: async (req, res, next) => {
         const { id, username, imageUrl } = req.user;
-        console.log("uer image url is: ", imageUrl);
 
 
         // if(true){
@@ -41,13 +41,25 @@ const familyController = {
                 leader: { ...userData },
             }
 
-            console.log('the family data is: ', familyData);
 
             const createNewFamily = await createFamily(familyData);
 
             if (!createNewFamily) {
                 return next(new appError('could not create family, please try again', statusCode.INTERNAL_SERVER_ERROR))
             }
+
+            const result = await joinFamily(createNewFamily.id, id);
+
+
+            const userRole = {
+                id: id,
+                role: 'leader'
+            }
+            const updateRole = await updateUser(userRole)
+
+
+
+
 
             return successResponse(res, createNewFamily, "family created successfully", statusCode.CREATED)
 
@@ -56,8 +68,7 @@ const familyController = {
             console.error("CREATE FAMILY ERROR:", error);
 
             if (error.code === 11000) {
-                console.log("Duplicate key pattern:", error.keyPattern);
-                console.log("Duplicate key value:", error.keyValue);
+           
 
                 const duplicatedField = Object.keys(error.keyPattern || {})[0];
 
@@ -223,9 +234,6 @@ const familyController = {
 
         const { id } = req.user || {};
 
-        console.log("the user id is: ", id);
-
-
         if (!id) {
             return next(
                 new appError(
@@ -238,13 +246,44 @@ const familyController = {
         try {
             const families = await getFamilyMembership(id);
 
-            console.log("Approved families found:", families.length);
-            console.log("Membership results:", families);
+            // 1. Extract all unique leader IDs from the families array
+            const leaderIds = families
+                .map((family) => family.leader?.id)
+                .filter(Boolean);
+
+            // 2. Fetch all matching users from the users collection in one query
+            // .select("-password") excludes sensitive fields; .lean() returns plain JS objects
+            const leaderUsers = await User.find({ _id: { $in: leaderIds } })
+                .select("-password -__v")
+                .lean();
+
+            // 3. Create a lookup map keyed by user _id string for fast matching
+            const leaderMap = leaderUsers.reduce((acc, user) => {
+                acc[user._id.toString()] = user;
+                return acc;
+            }, {});
+
+            const enrichedFamilies = families.map((family) => {
+                const familyObj = family.toObject ? family.toObject() : family;
+                const leaderIdStr = familyObj.leader?.id?.toString();
+                const fullUserData = leaderMap[leaderIdStr] || {};
+
+                return {
+                    ...familyObj,
+                    leader: {
+                        ...familyObj.leader,
+                        ...fullUserData // Merges email, phone, bio, etc. into leader
+                    }
+                };
+            });
+
+            
+
             return successResponse(
                 res,
                 {
-                    hasFamily: families.length > 0,
-                    families
+                    hasFamily: enrichedFamilies.length > 0,
+                    families: enrichedFamilies
                 },
                 "Family membership checked successfully"
             );

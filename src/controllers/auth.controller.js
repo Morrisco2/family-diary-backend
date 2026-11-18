@@ -190,6 +190,8 @@ const authController = {
     login: async (req, res, next) => {
 
         const { email, password } = req.body;
+        console.log("password and email are: ", password, email);
+        
 
         if (!email) {
             return next(new appError('Provide email address', statusCode.BAD_REQUEST))
