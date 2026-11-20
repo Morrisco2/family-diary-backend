@@ -1,5 +1,5 @@
-import statusCode from "../../constants/statusCode";
-import appError from "../../exceptions/appError";
+import statusCode from "../../constants/statusCode.js";
+import appError from "../../exceptions/appError.js";
 
 const authorizeRoles = (...allowedRoles) => {
 

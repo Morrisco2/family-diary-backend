@@ -27,7 +27,10 @@ const CONFIG = {
         CLOUD_NAME: process.env.CLOUD_NAME,
         CLOUD_API_KEY: process.env.CLOUD_API_KEY,
         CLOUD_API_SECRET: process.env.CLOUD_API_SECRET,
-        CLOUD_URL: process.env.CLOUD_URL
+        CLOUD_URL: process.env.CLOUD_URL,
+        VAPID_PUBLIC_KEY: process.env.VAPID_PUBLIC_KEY,
+        VAPID_PRIVATE_KEY: process.env.VAPID_PRIVATE_KEY,
+        VAPID_SUBJECT: process.env.VAPID_SUBJECT || "mailto:admin@familydiary.app"
     }
 }
 

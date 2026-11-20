@@ -14,6 +14,8 @@ import routes from "./routes/Routes.js";
 // SOCKET.IO DEPENDENCY IMPORT 
 import http from "http";
 import { initializeSocket } from "./config/socket.js";
+import { configurePush } from "./config/push.js";
+import { startBirthdayNotificationScheduler } from "./services/birthdayNotification.scheduler.js";
 
 
 
@@ -57,6 +59,8 @@ const startServer = async () => {
     try {
         validateEnvironment();
         await connectDB();
+        configurePush();
+        startBirthdayNotificationScheduler();
 
         server.listen(CONFIG.ENV.PORT, () => {
             console.log(`Family Diary API is running on port ${CONFIG.ENV.PORT}`);

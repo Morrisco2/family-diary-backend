@@ -38,6 +38,7 @@ const userSchema = new mongoose.Schema({
         }
     },
     dob: { type: String, required: true, trim: true },
+    timezone: { type: String, default: "UTC", trim: true },
     role: {
         type: String,
         enum: ["user", "leader", "admin"],
