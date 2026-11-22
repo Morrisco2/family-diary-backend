@@ -194,14 +194,58 @@ export const createGeneralNotification = async ({
   );
 };
 
+// export const getVisibleNotificationQuery = async (userId) => {
+//   const families = await Families.find({
+//     $or: [
+//       { "leader.id": userId },
+//       {
+//         members: {
+//           $elemMatch: {
+//             user: userId,
+//             status: "approved"
+//           }
+//         }
+//       }
+//     ]
+//   }).distinct("_id");
+
+//   return {
+//     $and: [
+//       {
+//         $or: [
+//           {
+//             recipientType: "individual",
+//             user: userId
+//           },
+//           {
+//             recipientType: "family",
+//             family: { $in: families }
+//           },
+//           {
+//             recipientType: "general",
+//             audienceUserIds: userId
+//           }
+//         ]
+//       },
+//       {
+//         excludedUsers: { $ne: userId }
+//       }
+//     ]
+//   };
+// };
+
+
 export const getVisibleNotificationQuery = async (userId) => {
+  // Normalize user ID to MongoDB ObjectId.
+  const userObjectId = new mongoose.Types.ObjectId(userId);
+
   const families = await Families.find({
     $or: [
-      { "leader.id": userId },
+      { "leader.id": userObjectId },
       {
         members: {
           $elemMatch: {
-            user: userId,
+            user: userObjectId,
             status: "approved"
           }
         }
@@ -215,7 +259,7 @@ export const getVisibleNotificationQuery = async (userId) => {
         $or: [
           {
             recipientType: "individual",
-            user: userId
+            user: userObjectId
           },
           {
             recipientType: "family",
@@ -223,12 +267,12 @@ export const getVisibleNotificationQuery = async (userId) => {
           },
           {
             recipientType: "general",
-            audienceUserIds: userId
+            audienceUserIds: userObjectId
           }
         ]
       },
       {
-        excludedUsers: { $ne: userId }
+        excludedUsers: { $ne: userObjectId }
       }
     ]
   };
@@ -294,8 +338,75 @@ export const getNotifications = async (
   };
 };
 
+// export const getUnreadCount = async (userId) => {
+//   const query = await getVisibleNotificationQuery(userId);
+
+//   const result = await Notification.aggregate([
+//     {
+//       $match: query
+//     },
+//     {
+//       $lookup: {
+//         from: NotificationRead.collection.name,
+//         let: {
+//           notificationId: "$_id"
+//         },
+//         pipeline: [
+//           {
+//             $match: {
+//               $expr: {
+//                 $and: [
+//                   {
+//                     $eq: [
+//                       "$notification",
+//                       "$$notificationId"
+//                     ]
+//                   },
+//                   {
+//                     $eq: [
+//                       "$user",
+//                       new mongoose.Types.ObjectId(userId)
+//                     ]
+//                   },
+//                   {
+//                     $or: [
+//                       {
+//                         $ne: ["$readAt", null]
+//                       },
+//                       {
+//                         $ne: ["$dismissedAt", null]
+//                       }
+//                     ]
+//                   }
+//                 ]
+//               }
+//             }
+//           },
+//           {
+//             $limit: 1
+//           }
+//         ],
+//         as: "receipt"
+//       }
+//     },
+//     {
+//       $match: {
+//         receipt: { $size: 0 }
+//       }
+//     },
+//     {
+//       $count: "count"
+//     }
+//   ]);
+
+//   return result[0]?.count || 0;
+// };
+
+
 export const getUnreadCount = async (userId) => {
-  const query = await getVisibleNotificationQuery(userId);
+  const userObjectId = new mongoose.Types.ObjectId(userId);
+
+  const query = await getVisibleNotificationQuery(userObjectId);
 
   const result = await Notification.aggregate([
     {
@@ -321,16 +432,22 @@ export const getUnreadCount = async (userId) => {
                   {
                     $eq: [
                       "$user",
-                      new mongoose.Types.ObjectId(userId)
+                      userObjectId
                     ]
                   },
                   {
                     $or: [
                       {
-                        $ne: ["$readAt", null]
+                        $ne: [
+                          { $ifNull: ["$readAt", null] },
+                          null
+                        ]
                       },
                       {
-                        $ne: ["$dismissedAt", null]
+                        $ne: [
+                          { $ifNull: ["$dismissedAt", null] },
+                          null
+                        ]
                       }
                     ]
                   }
@@ -357,6 +474,7 @@ export const getUnreadCount = async (userId) => {
 
   return result[0]?.count || 0;
 };
+
 
 export const markNotificationRead = async (
   notificationId,

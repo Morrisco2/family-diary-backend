@@ -10,10 +10,10 @@ const router = Router()
 
 // passport routes
 router.get("/csrf", authController.csrfToken);
-router.post("/refresh", authLimiter, authController.refresh);
+router.post("/refresh",  authController.refresh);
 router.post('/register', authLimiter, uploadImage("image"), authMiddelware.registerMiddleware, authController.register);
-router.post('/login',authLimiter,  authMiddelware.loginMiddleware, authController.login);
-router.post("/logout", authLimiter, authController.logout);
+router.post('/login',  authMiddelware.loginMiddleware, authController.login);
+router.post("/logout", authController.logout);
 
 
 export default router;
