@@ -19,8 +19,7 @@ import { initializeSocket } from "./config/socket.js";
 
 const app = express();
 
-// Only configure trust proxy when the deployment actually sits behind a
-// known reverse proxy. Set TRUST_PROXY=1 (or the appropriate hop count) there.
+
 if (CONFIG.ENV.TRUST_PROXY) {
     const trustProxy = /^\d+$/.test(CONFIG.ENV.TRUST_PROXY)
         ? Number(CONFIG.ENV.TRUST_PROXY)
@@ -62,9 +61,6 @@ const startServer = async () => {
             console.log(`Family Diary API is running on port ${CONFIG.ENV.PORT}`);
         });
 
-        // app.listen(CONFIG.ENV.PORT, () => {
-        //     console.log(`Family Diary API is running on port ${CONFIG.ENV.PORT}`);
-        // });
     } catch (error) {
         console.error("Server startup failed:", error.message);
         process.exitCode = 1;
