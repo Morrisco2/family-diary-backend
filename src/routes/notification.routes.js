@@ -16,4 +16,8 @@ router.get("/push/public-key", controller.publicKey);
 router.post("/push/subscribe", controller.subscribePush);
 router.delete("/push/unsubscribe", controller.unsubscribePush);
 router.post("/admin", authorizeRoles("admin"), controller.createGeneral);
+router.post(
+    "/admin/test-socket",
+    controller.testSocketNotification
+);
 export default router;

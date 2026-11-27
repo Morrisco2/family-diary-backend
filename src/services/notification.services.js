@@ -139,6 +139,7 @@ export const createFamilyNotification = async ({
   );
 };
 
+
 export const createIndividualNotification = async ({
   userId,
   senderId = null,
@@ -146,6 +147,7 @@ export const createIndividualNotification = async ({
   text,
   type = "GENERAL",
   relatedId = null,
+  confirmMember = false,
   eventKey = null
 }) => {
   return publishNotification(
@@ -157,11 +159,13 @@ export const createIndividualNotification = async ({
       text,
       type,
       relatedId,
+      confirmMember,
       eventKey
     },
     [userId]
   );
 };
+
 
 export const createGeneralNotification = async ({
   senderId,
@@ -193,46 +197,6 @@ export const createGeneralNotification = async ({
     audienceUserIds
   );
 };
-
-// export const getVisibleNotificationQuery = async (userId) => {
-//   const families = await Families.find({
-//     $or: [
-//       { "leader.id": userId },
-//       {
-//         members: {
-//           $elemMatch: {
-//             user: userId,
-//             status: "approved"
-//           }
-//         }
-//       }
-//     ]
-//   }).distinct("_id");
-
-//   return {
-//     $and: [
-//       {
-//         $or: [
-//           {
-//             recipientType: "individual",
-//             user: userId
-//           },
-//           {
-//             recipientType: "family",
-//             family: { $in: families }
-//           },
-//           {
-//             recipientType: "general",
-//             audienceUserIds: userId
-//           }
-//         ]
-//       },
-//       {
-//         excludedUsers: { $ne: userId }
-//       }
-//     ]
-//   };
-// };
 
 
 export const getVisibleNotificationQuery = async (userId) => {
@@ -337,71 +301,6 @@ export const getNotifications = async (
     pages: Math.ceil(total / limit)
   };
 };
-
-// export const getUnreadCount = async (userId) => {
-//   const query = await getVisibleNotificationQuery(userId);
-
-//   const result = await Notification.aggregate([
-//     {
-//       $match: query
-//     },
-//     {
-//       $lookup: {
-//         from: NotificationRead.collection.name,
-//         let: {
-//           notificationId: "$_id"
-//         },
-//         pipeline: [
-//           {
-//             $match: {
-//               $expr: {
-//                 $and: [
-//                   {
-//                     $eq: [
-//                       "$notification",
-//                       "$$notificationId"
-//                     ]
-//                   },
-//                   {
-//                     $eq: [
-//                       "$user",
-//                       new mongoose.Types.ObjectId(userId)
-//                     ]
-//                   },
-//                   {
-//                     $or: [
-//                       {
-//                         $ne: ["$readAt", null]
-//                       },
-//                       {
-//                         $ne: ["$dismissedAt", null]
-//                       }
-//                     ]
-//                   }
-//                 ]
-//               }
-//             }
-//           },
-//           {
-//             $limit: 1
-//           }
-//         ],
-//         as: "receipt"
-//       }
-//     },
-//     {
-//       $match: {
-//         receipt: { $size: 0 }
-//       }
-//     },
-//     {
-//       $count: "count"
-//     }
-//   ]);
-
-//   return result[0]?.count || 0;
-// };
-
 
 export const getUnreadCount = async (userId) => {
   const userObjectId = new mongoose.Types.ObjectId(userId);
@@ -581,3 +480,53 @@ export const dismissNotification = async (
 
   return true;
 };
+
+
+
+export const testNotificationForAllUsers = async ({
+  title,
+  text,
+  senderId = null
+}) => {
+  const User = mongoose.model("User");
+
+  const userIds = await User.distinct("_id", {});
+
+  if (!userIds.length) {
+    throw new Error("No registered users found.");
+  }
+
+  // Insert notification into database
+  const notification = await Notification.create({
+    recipientType: "general",
+    audienceUserIds: userIds,
+    sender: senderId,
+    title,
+    text,
+    type: "GENERAL",
+    channels: ["in_app", "socket"]
+  });
+
+  // Emit notification to all users
+  const io = getIO();
+
+  for (const userId of userIds) {
+    const room = `user:${asId(userId)}`;
+    const roomSockets = await io.in(room).fetchSockets();
+
+    console.log("--------------------------------");
+    console.log("Target user ID:", asId(userId));
+    console.log("Target room:", room);
+    console.log("Sockets in target room:", roomSockets.length);
+    console.log(
+      "Socket IDs:",
+      roomSockets.map((s) => s.id)
+    );
+
+    io.to(room).emit("newNotification", notification);
+  }
+
+  return notification;
+};
+
+

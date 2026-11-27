@@ -10,6 +10,7 @@ import errorHandler from "./exceptions/errorHandler.js";
 import { doubleCsrfProtection } from "./middlewares/security/csrfProtection.js";
 import { generalApiLimiter } from "./middlewares/security/rateLimiter.js";
 import routes from "./routes/Routes.js";
+import { testNotificationForAllUsers } from "./services/notification.services.js";
 
 // SOCKET.IO DEPENDENCY IMPORT 
 import http from "http";
@@ -64,6 +65,8 @@ const startServer = async () => {
         server.listen(CONFIG.ENV.PORT, () => {
             console.log(`Family Diary API is running on port ${CONFIG.ENV.PORT}`);
         });
+
+
 
     } catch (error) {
         console.error("Server startup failed:", error.message);
