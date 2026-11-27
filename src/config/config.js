@@ -18,19 +18,21 @@ const CONFIG = {
         CLIENT_URLS: process.env.CLIENT_URLS,
         TRUST_PROXY: process.env.TRUST_PROXY,
 
-        EMAIL_HOST: process.env.EMAIL_HOST,
-        EMAIL_PORT: process.env.EMAIL_PORT,
-        EMAIL_USER: process.env.EMAIL_USER,
-        EMAIL_PASSWORD: process.env.EMAIL_PASSWORD,
-        FROM_EMAIL: process.env.FROM_EMAIL,
-
         CLOUD_NAME: process.env.CLOUD_NAME,
         CLOUD_API_KEY: process.env.CLOUD_API_KEY,
         CLOUD_API_SECRET: process.env.CLOUD_API_SECRET,
         CLOUD_URL: process.env.CLOUD_URL,
         VAPID_PUBLIC_KEY: process.env.VAPID_PUBLIC_KEY,
         VAPID_PRIVATE_KEY: process.env.VAPID_PRIVATE_KEY,
-        VAPID_SUBJECT: process.env.VAPID_SUBJECT || "mailto:admin@familydiary.app"
+        VAPID_SUBJECT: process.env.VAPID_SUBJECT || "mailto:admin@familydiary.app",
+
+        SMTP_HOST:process.env.SMTP_HOST,
+        SMTP_PORT: process.env.SMTP_PORT,
+        SMTP_SECURE:process.env.SMTP_SECURE,
+        SMTP_USER:process.env.SMTP_USER,
+        SMTP_PASSWORD:process.env.SMTP_PASSWORD,
+        MAIL_FROM_NAME:process.env.MAIL_FROM_NAME,
+        MAIL_FROM_EMAIL:process.env.MAIL_FROM_EMAIL
     }
 }
 

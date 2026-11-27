@@ -9,14 +9,10 @@ import {
     joinFamily,
     updateFamilyMemberStatus
 } from "../services/family.services.js";
-import {
-    findUserById,
-    updateUser
-} from "../services/user.services.js";
+import { findUserById, updateUser } from "../services/user.services.js";
 import User from "../models/user.model.js";
-import {
-    createIndividualNotification
-} from "../services/notification.services.js";
+import { createIndividualNotification } from "../services/notification.services.js";
+import sendAppNotificationEmail from "../utils/emailHelpers.js";
 
 
 const familyController = {
@@ -407,33 +403,92 @@ const familyController = {
         }
     },
 
-    confirmNewMember: async (req, res, next)=>{
-        console.log('confirm new member route hitted');
-        const {id, username, email, role} = req.user;
-        const {senderId} = req.body;
-        
-       try {
-        const family = await findFamilyByLeaderAndMember(id, senderId);
 
-        if (!family) {F
-            return next(
-                new appError(
-                    "Family or member not found",
-                    statusCode.NOT_FOUND
-                )
+    confirmNewMember: async (req, res, next) => {
+        console.log("confirm new member route hit");
+
+        const { id } = req.user;
+        const { senderId } = req.body;
+
+  
+
+        console.log("Leader ID:", id);
+        console.log("Sender ID:", senderId);
+
+
+        try {
+
+            const family = await findFamilyByLeaderAndMember(id, senderId);
+
+            if (!family) {
+                return next(
+                    new appError(
+                        "Family or member not found",
+                        statusCode.NOT_FOUND
+                    )
+                );
+            }
+
+            const updateStatus = await updateFamilyMemberStatus(
+                family._id,
+                senderId,
+                "approve"
             );
+
+            if (
+                !updateStatus ||
+                updateStatus.invalidAction ||
+                updateStatus.notFound ||
+                updateStatus.memberNotFound ||
+                updateStatus.alreadyProcessed
+            ) {
+                return next(
+                    new appError(
+                        updateStatus?.message || "Unable to approve member",
+                        statusCode.BAD_REQUEST
+                    )
+                );
+            }
+
+            const approvedMember = await findUserById(senderId);
+
+            if (approvedMember?.email) {
+                try {
+                    await sendAppNotificationEmail({
+                        recipient: approvedMember,
+                        notification: {
+                            title: "Membership Approved",
+                            message: `Your request to join ${family.familyName} has been approved. You can now access your family dashboard and connect with your family members.`,
+                        },
+                        actionText: "Open Family Diary",
+                        actionUrl: `${process.env.APP_URL}/dashboard`,
+                        familyName: family.familyName,
+                    });
+
+                    console.log(
+                        `Approval email sent to ${approvedMember.email}`
+                    );
+
+                } catch (emailError) {
+                    // Email failure must not undo membership approval
+                    console.error(
+                        "Failed to send approval email:",
+                        emailError.message
+                    );
+                }
+            }
+
+            return res.status(statusCode.OK).json({
+                success: true,
+                message: "Member approved successfully",
+                data: updateStatus,
+            });
+
+        } catch (error) {
+            return next(error);
         }
+    },
 
-        console.log(family._id, family.familyName);
-        
-        const updateStatus = await updateFamilyMemberStatus(family._id, senderId, action)
-        ;
-
-       } catch (error) {
-        
-       }
-        
-    }
 
 };
 
