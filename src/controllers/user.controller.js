@@ -8,6 +8,7 @@ const userController = {
 
         console.log("fetch user profile data route hitted");
         console.log("the user data is: ", req.user);
+        
 
         if (!req.user) {
             return next(new appError("please login first", statusCode.UNAUTHORISED))

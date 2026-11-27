@@ -51,11 +51,14 @@ export const initializeSocket = (server) => {
     const userId = socket.user.id;
 
     socket.join(`user:${userId}`);
+    console.log("Socket ID:", socket.id);
+    console.log("Joined room:", `user:${userId}`);
 
     console.log(`User connected: ${userId}`);
 
-    socket.on("disconnect", () => {
+    socket.on("disconnect", (reason) => {
       console.log(`User disconnected: ${userId}`);
+      console.log("Disconnect reason:", reason);
     });
   });
 

@@ -3,13 +3,16 @@ import appError from "../exceptions/appError.js";
 import successResponse from "../exceptions/successResponse.js";
 import PushSubscription from "../models/pushSubcription.model.js";
 import CONFIG from "../config/config.js";
+import notificationCountSocket from "../utils/notificationCountSocket.js";
 import {
   createGeneralNotification,
+  createFamilyNotification,
   getNotifications,
   getUnreadCount,
   markNotificationRead,
   markAllNotificationsRead,
   dismissNotification,
+  testNotificationForAllUsers,
 } from "../services/notification.services.js";
 
 const controller = {
@@ -27,7 +30,7 @@ const controller = {
       });
 
       console.log("all the notification os this uer and status are: ", notifications);
-      
+
 
       return successResponse(
         res,
@@ -43,7 +46,7 @@ const controller = {
     try {
       const count = await getUnreadCount(req.user.id);
       console.log("the result of unread count is: ", count);
-      
+
       return successResponse(res, { count }, "Unread count fetched");
     } catch (e) {
       return next(e);
@@ -53,9 +56,15 @@ const controller = {
   markRead: async (req, res, next) => {
     try {
       const ok = await markNotificationRead(req.params.id, req.user.id);
+
       if (!ok) {
-        return next(new appError("Notification not found", statusCode.NOT_FOUND));
+        return next(
+          new appError("Notification not found", statusCode.NOT_FOUND)
+        );
       }
+
+      notificationCountSocket([req.user.id]);
+
       return successResponse(res, null, "Notification marked as read");
     } catch (e) {
       return next(e);
@@ -65,6 +74,11 @@ const controller = {
   markAllRead: async (req, res, next) => {
     try {
       const count = await markAllNotificationsRead(req.user.id);
+
+      if (count > 0) {
+        notificationCountSocket([req.user.id]);
+      }
+
       return successResponse(res, { count }, "Notifications marked as read");
     } catch (e) {
       return next(e);
@@ -74,9 +88,15 @@ const controller = {
   dismiss: async (req, res, next) => {
     try {
       const ok = await dismissNotification(req.params.id, req.user.id);
+
       if (!ok) {
-        return next(new appError("Notification not found", statusCode.NOT_FOUND));
+        return next(
+          new appError("Notification not found", statusCode.NOT_FOUND)
+        );
       }
+
+      notificationCountSocket([req.user.id]);
+
       return successResponse(res, null, "Notification dismissed");
     } catch (e) {
       return next(e);
@@ -147,7 +167,69 @@ const controller = {
       "Push public key fetched"
     );
   },
+  // testSocketNotification: async (req, res, next) => {
+  //   try {
+  //     const { title, text } = req.body || {};
 
+  //     if (!title?.trim() || !text?.trim()) {
+  //       return next(
+  //         new appError(
+  //           "Title and message are required",
+  //           statusCode.BAD_REQUEST
+  //         )
+  //       );
+  //     }
+
+  //     const notification = await testNotificationForAllUsers({
+  //       title,
+  //       text,
+  //       senderId: req.user.id
+  //     });
+
+  //     return successResponse(
+  //       res,
+  //       notification,
+  //       "Test notification sent",
+  //       statusCode.CREATED
+  //     );
+  //   } catch (e) {
+  //     return next(e);
+  //   }
+  // },
+
+
+  testSocketNotification: async (req, res, next) => {
+    try {
+      const { title, text } = req.body || {};
+
+      if (!title?.trim() || !text?.trim()) {
+        return next(
+          new appError(
+            "Title and message are required",
+            statusCode.BAD_REQUEST
+          )
+        );
+      }
+
+      const notification = await createFamilyNotification({
+        familyId: "6af606c5b54888eb6b38c472",
+        senderId: req.user.id,
+        title,
+        text,
+        type: "GENERAL",
+        confirmMember:true,
+      });
+
+      return successResponse(
+        res,
+        notification,
+        "Test notification sent to Bakayesima's family",
+        statusCode.CREATED
+      );
+    } catch (e) {
+      return next(e);
+    }
+  },
   createGeneral: async (req, res, next) => {
     try {
       const { title, text } = req.body || {};
