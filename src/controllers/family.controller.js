@@ -428,12 +428,16 @@ const familyController = {
                     )
                 );
             }
-
+            console.log('the result of finding by leader and member is: ', family);
+            
             const updateStatus = await updateFamilyMemberStatus(
                 family._id,
                 senderId,
-                "approve"
+                "approved"
             );
+
+            console.log('the result of updating family member status is: ', updateStatus);
+            
 
             if (
                 !updateStatus ||
@@ -478,11 +482,7 @@ const familyController = {
                 }
             }
 
-            return res.status(statusCode.OK).json({
-                success: true,
-                message: "Member approved successfully",
-                data: updateStatus,
-            });
+            return successResponse(res, updateStatus, "Member approved successfully", statusCode.success );
 
         } catch (error) {
             return next(error);
