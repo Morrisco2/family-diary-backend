@@ -13,7 +13,7 @@ router.get("/csrf", authController.csrfToken);
 router.post("/refresh",  authController.refresh);
 router.post('/register', authLimiter, uploadImage("image"), authMiddelware.registerMiddleware, authController.register);
 router.post('/login',  authMiddelware.loginMiddleware, authController.login);
-router.post("/logout", authController.logout);
+router.post("/logout", authLimiter, authController.logout);
 
 
 export default router;

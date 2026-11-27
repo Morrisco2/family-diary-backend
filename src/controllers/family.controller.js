@@ -324,6 +324,7 @@ const familyController = {
 
 
     // CHECK IF USER IS A MEMBER OF A FAMILY
+
     getMyFamilyMembership: async (req, res, next) => {
         console.log("get family membership route hitted");
 
@@ -382,6 +383,7 @@ const familyController = {
             return successResponse(
                 res,
                 {
+                    userId: id,
                     hasFamily: enrichedFamilies.length > 0,
                     families: enrichedFamilies
                 },
@@ -403,14 +405,13 @@ const familyController = {
         }
     },
 
-
     confirmNewMember: async (req, res, next) => {
         console.log("confirm new member route hit");
 
         const { id } = req.user;
         const { senderId } = req.body;
 
-  
+
 
         console.log("Leader ID:", id);
         console.log("Sender ID:", senderId);
@@ -429,7 +430,7 @@ const familyController = {
                 );
             }
             console.log('the result of finding by leader and member is: ', family);
-            
+
             const updateStatus = await updateFamilyMemberStatus(
                 family._id,
                 senderId,
@@ -437,7 +438,7 @@ const familyController = {
             );
 
             console.log('the result of updating family member status is: ', updateStatus);
-            
+
 
             if (
                 !updateStatus ||
@@ -482,7 +483,7 @@ const familyController = {
                 }
             }
 
-            return successResponse(res, updateStatus, "Member approved successfully", statusCode.success );
+            return successResponse(res, updateStatus, "Member approved successfully", statusCode.success);
 
         } catch (error) {
             return next(error);
