@@ -32,7 +32,8 @@ const CONFIG = {
         SMTP_USER:process.env.SMTP_USER,
         SMTP_PASSWORD:process.env.SMTP_PASSWORD,
         MAIL_FROM_NAME:process.env.MAIL_FROM_NAME,
-        MAIL_FROM_EMAIL:process.env.MAIL_FROM_EMAIL
+        MAIL_FROM_EMAIL:process.env.MAIL_FROM_EMAIL,
+        FAMILY_DIARY_LOGO_URL:process.env.FAMILY_DIARY_LOGO_URL
     }
 }
 

@@ -1,3 +1,4 @@
+import CONFIG from "../../config/config";
 
 const APP_NAME = "Family Diary";
 const APP_COLOR = "#2E5E99";
@@ -5,6 +6,8 @@ const BACKGROUND_COLOR = "#E9F1FA";
 const CARD_COLOR = "#D0DDED";
 const TEXT_COLOR = "#1F2937";
 const MUTED_COLOR = "#64748B";
+
+const APP_LOGO_URL = CONFIG.ENV.FAMILY_DIARY_LOGO_URL || "";
 
 const escapeHtml = (value = "") => {
     return String(value)
@@ -43,6 +46,26 @@ const emailLayout = ({
                     ${escapeHtml(buttonText)}
                 </a>
             </div>
+        `
+        : "";
+
+    const logo = APP_LOGO_URL
+        ? `
+            <img
+                src="${escapeHtml(APP_LOGO_URL)}"
+                alt="${APP_NAME}"
+                width="70"
+                style="
+                    display:block;
+                    width:70px;
+                    max-width:70px;
+                    height:auto;
+                    margin:0 auto 12px;
+                    border:0;
+                    outline:none;
+                    text-decoration:none;
+                "
+            />
         `
         : "";
 
@@ -102,12 +125,15 @@ const emailLayout = ({
                         "
                     >
 
+                        <!-- Email Header -->
                         <tr>
                             <td style="
                                 padding:28px 24px;
                                 text-align:center;
                                 background:${APP_COLOR};
                             ">
+                                ${logo}
+
                                 <h1 style="
                                     margin:0;
                                     color:#FFFFFF;
@@ -119,6 +145,7 @@ const emailLayout = ({
                             </td>
                         </tr>
 
+                        <!-- Email Content -->
                         <tr>
                             <td style="padding:36px 30px 24px;">
 
@@ -138,6 +165,7 @@ const emailLayout = ({
                             </td>
                         </tr>
 
+                        <!-- Email Footer -->
                         <tr>
                             <td style="
                                 padding:24px;
